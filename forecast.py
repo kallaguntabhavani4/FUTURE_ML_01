@@ -13,13 +13,12 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # ============================================
-# STEP 1: SAMPLE DATA CREATE చేయండి
-# (Real data ఉంటే CSV load చేయవచ్చు)
+# STEP 1: SAMPLE DATA CREATE
 # ============================================
 
 np.random.seed(42)
 
-# 3 సంవత్సరాల monthly sales data
+# 3 years monthly sales data
 dates = pd.date_range(start='2022-01-01', end='2024-12-31', freq='MS')
 months = len(dates)
 
@@ -35,14 +34,14 @@ df = pd.DataFrame({
 })
 
 print("=" * 50)
-print("SALES DATA - మొదటి 12 నెలలు:")
+print("SALES DATA - First 12 Months:")
 print("=" * 50)
 print(df.head(12).to_string(index=False))
 print(f"\nTotal Records: {len(df)}")
 print(f"Date Range: {df['Date'].min().date()} to {df['Date'].max().date()}")
-print(f"Average Monthly Sales: ₹{df['Sales'].mean():,.0f}")
-print(f"Max Sales: ₹{df['Sales'].max():,.0f}")
-print(f"Min Sales: ₹{df['Sales'].min():,.0f}")
+print(f"Average Monthly Sales: Rs.{df['Sales'].mean():,.0f}")
+print(f"Max Sales: Rs.{df['Sales'].max():,.0f}")
+print(f"Min Sales: Rs.{df['Sales'].min():,.0f}")
 
 # ============================================
 # STEP 2: FEATURE ENGINEERING
@@ -50,7 +49,7 @@ print(f"Min Sales: ₹{df['Sales'].min():,.0f}")
 
 df['Month'] = df['Date'].dt.month
 df['Year'] = df['Date'].dt.year
-df['Month_Num'] = range(1, len(df) + 1)  # 1,2,3... continuous
+df['Month_Num'] = range(1, len(df) + 1)
 df['Quarter'] = df['Date'].dt.quarter
 df['Sin_Month'] = np.sin(2 * np.pi * df['Month'] / 12)
 df['Cos_Month'] = np.cos(2 * np.pi * df['Month'] / 12)
@@ -65,7 +64,7 @@ print("                Sin_Month, Cos_Month")
 # STEP 3: TRAIN/TEST SPLIT
 # ============================================
 
-# చివరి 6 నెలలు test గా వాడతాం
+# Last 6 months used for testing
 train_size = len(df) - 6
 train = df.iloc[:train_size]
 test = df.iloc[train_size:]
@@ -86,7 +85,6 @@ print(f"Testing Data:  {len(test)} months")
 # STEP 4: MODEL TRAINING
 # ============================================
 
-# Polynomial Regression (degree=2 for curve fitting)
 poly = PolynomialFeatures(degree=2, include_bias=False)
 X_train_poly = poly.fit_transform(X_train)
 X_test_poly = poly.transform(X_test)
@@ -94,7 +92,6 @@ X_test_poly = poly.transform(X_test)
 model = LinearRegression()
 model.fit(X_train_poly, y_train)
 
-# Predictions
 train_pred = model.predict(X_train_poly)
 test_pred = model.predict(X_test_poly)
 
@@ -114,8 +111,8 @@ mape = np.mean(np.abs((y_test - test_pred) / y_test)) * 100
 print("\n" + "=" * 50)
 print("MODEL PERFORMANCE:")
 print("=" * 50)
-print(f"MAE  (Mean Absolute Error):  ₹{mae:,.0f}")
-print(f"RMSE (Root Mean Sq Error):   ₹{rmse:,.0f}")
+print(f"MAE  (Mean Absolute Error):  Rs.{mae:,.0f}")
+print(f"RMSE (Root Mean Sq Error):   Rs.{rmse:,.0f}")
 print(f"MAPE (Mean Abs % Error):     {mape:.2f}%")
 print(f"Accuracy:                    {100-mape:.2f}%")
 
@@ -141,7 +138,7 @@ print("\n" + "=" * 50)
 print("FUTURE SALES FORECAST (Jan-Jun 2025):")
 print("=" * 50)
 for date, pred in zip(future_dates, future_pred):
-    print(f"  {date.strftime('%B %Y')}: ₹{pred:>10,.0f}")
+    print(f"  {date.strftime('%B %Y')}: Rs.{pred:>10,.0f}")
 
 # ============================================
 # STEP 7: VISUALIZATION
@@ -151,7 +148,6 @@ fig, axes = plt.subplots(2, 2, figsize=(16, 10))
 fig.suptitle('Sales Forecast Dashboard', fontsize=18, fontweight='bold', y=0.98)
 fig.patch.set_facecolor('#F8F9FA')
 
-# --- Chart 1: Full Forecast View ---
 ax1 = axes[0, 0]
 ax1.set_facecolor('#FFFFFF')
 ax1.plot(train['Date'], train['Sales'], color='#2196F3', linewidth=2, label='Training Data')
@@ -162,12 +158,11 @@ ax1.plot(future_dates, future_pred, color='#E91E63', linewidth=2.5,
 ax1.axvline(x=test['Date'].iloc[0], color='gray', linestyle=':', alpha=0.7, label='Train/Test Split')
 ax1.set_title('Sales Forecast Overview', fontweight='bold', fontsize=12)
 ax1.set_xlabel('Date')
-ax1.set_ylabel('Sales (₹)')
+ax1.set_ylabel('Sales (Rs.)')
 ax1.legend(fontsize=8)
-ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'₹{x:,.0f}'))
+ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'Rs.{x:,.0f}'))
 ax1.grid(True, alpha=0.3)
 
-# --- Chart 2: Actual vs Predicted ---
 ax2 = axes[0, 1]
 ax2.set_facecolor('#FFFFFF')
 ax2.scatter(y_test, test_pred, color='#673AB7', alpha=0.8, s=80, edgecolors='white', linewidth=1.5)
@@ -175,12 +170,11 @@ min_val = min(y_test.min(), test_pred.min())
 max_val = max(y_test.max(), test_pred.max())
 ax2.plot([min_val, max_val], [min_val, max_val], 'r--', linewidth=2, label='Perfect Prediction')
 ax2.set_title('Actual vs Predicted Sales', fontweight='bold', fontsize=12)
-ax2.set_xlabel('Actual Sales (₹)')
-ax2.set_ylabel('Predicted Sales (₹)')
+ax2.set_xlabel('Actual Sales (Rs.)')
+ax2.set_ylabel('Predicted Sales (Rs.)')
 ax2.legend()
 ax2.grid(True, alpha=0.3)
 
-# --- Chart 3: Monthly Seasonality ---
 ax3 = axes[1, 0]
 ax3.set_facecolor('#FFFFFF')
 monthly_avg = df.groupby('Month')['Sales'].mean()
@@ -190,10 +184,9 @@ colors = ['#FF6B6B' if v == monthly_avg.max() else '#4ECDC4' for v in monthly_av
 bars = ax3.bar(month_names, monthly_avg.values, color=colors, edgecolor='white', linewidth=1.5)
 ax3.set_title('Average Sales by Month (Seasonality)', fontweight='bold', fontsize=12)
 ax3.set_xlabel('Month')
-ax3.set_ylabel('Average Sales (₹)')
-ax3.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'₹{x:,.0f}'))
+ax3.set_ylabel('Average Sales (Rs.)')
+ax3.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'Rs.{x:,.0f}'))
 ax3.grid(True, alpha=0.3, axis='y')
-# Peak month highlight
 peak_month = monthly_avg.idxmax()
 ax3.annotate(f'Peak: {month_names[peak_month-1]}',
              xy=(peak_month-1, monthly_avg.max()),
@@ -201,22 +194,21 @@ ax3.annotate(f'Peak: {month_names[peak_month-1]}',
              fontsize=9, color='#FF6B6B', fontweight='bold',
              arrowprops=dict(arrowstyle='->', color='#FF6B6B'))
 
-# --- Chart 4: Future Forecast Bar ---
 ax4 = axes[1, 1]
 ax4.set_facecolor('#FFFFFF')
 future_month_names = [d.strftime('%b %Y') for d in future_dates]
 bar_colors = ['#3F51B5', '#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50']
 bars2 = ax4.bar(future_month_names, future_pred, color=bar_colors,
                 edgecolor='white', linewidth=1.5)
-ax4.set_title('Future Sales Forecast (Jan–Jun 2025)', fontweight='bold', fontsize=12)
+ax4.set_title('Future Sales Forecast (Jan-Jun 2025)', fontweight='bold', fontsize=12)
 ax4.set_xlabel('Month')
-ax4.set_ylabel('Forecasted Sales (₹)')
-ax4.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'₹{x:,.0f}'))
+ax4.set_ylabel('Forecasted Sales (Rs.)')
+ax4.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'Rs.{x:,.0f}'))
 ax4.grid(True, alpha=0.3, axis='y')
 plt.xticks(rotation=30)
 for bar, val in zip(bars2, future_pred):
     ax4.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 500,
-             f'₹{val:,.0f}', ha='center', va='bottom', fontsize=8, fontweight='bold')
+             f'Rs.{val:,.0f}', ha='center', va='bottom', fontsize=8, fontweight='bold')
 
 plt.tight_layout()
 plt.savefig('sales_forecast_dashboard.png', dpi=150, bbox_inches='tight',
@@ -224,11 +216,11 @@ plt.savefig('sales_forecast_dashboard.png', dpi=150, bbox_inches='tight',
 plt.show()
 
 print("\n" + "=" * 50)
-print("✅ DASHBOARD SAVED: sales_forecast_dashboard.png")
-print("✅ PROJECT COMPLETE!")
+print("Dashboard saved: sales_forecast_dashboard.png")
+print("Project Complete!")
 print("=" * 50)
-print("\n📊 BUSINESS INSIGHTS:")
-print(f"  • Average Monthly Growth: ₹{(df['Sales'].iloc[-1] - df['Sales'].iloc[0]) / len(df):,.0f}")
-print(f"  • Best Month Pattern: {month_names[monthly_avg.idxmax()-1]} (Peak Season)")
-print(f"  • 6-Month Forecast Total: ₹{sum(future_pred):,.0f}")
-print(f"  • Model Accuracy: {100-mape:.1f}%")
+print("\nBUSINESS INSIGHTS:")
+print(f"  Average Monthly Growth: Rs.{(df['Sales'].iloc[-1] - df['Sales'].iloc[0]) / len(df):,.0f}")
+print(f"  Best Month Pattern: {month_names[monthly_avg.idxmax()-1]} (Peak Season)")
+print(f"  6-Month Forecast Total: Rs.{sum(future_pred):,.0f}")
+print(f"  Model Accuracy: {100-mape:.1f}%")
